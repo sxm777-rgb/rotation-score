@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#08100d">
+<title>Rotation Score</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="Rotation Score">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#08100d;color:#f5f7f6;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif}
+.app{max-width:520px;margin:auto;min-height:100vh;padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 16px)}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}h1{font-size:22px;margin:0}.gear{border:0;background:none;color:#9aa6a0;font-size:24px}
+.card{background:#131b17;border:1px solid #26332c;border-radius:18px;padding:12px;margin-bottom:10px}
+.players{display:grid;grid-template-columns:1fr 1fr;gap:8px}.p{border:2px solid #26332c;border-radius:15px;padding:10px;text-align:center;background:#0e1512}.p.active{border-color:#55d98d}.tag{font-size:9px;color:#55d98d;font-weight:800;height:13px}.name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.score{font-size:42px;font-weight:900;line-height:1.05}.remain{font-size:11px;color:#93a09a}.bar{height:5px;background:#27342d;border-radius:4px;margin-top:7px;overflow:hidden}.bar i{display:block;height:100%;background:#55d98d}
+.turn{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.turn b{font-size:16px}.pill{font-size:10px;background:#222d27;color:#aab4af;border-radius:20px;padding:6px 8px}
+.balls{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.ball{border:0;border-radius:50%;aspect-ratio:1;background:#313c36;color:white;font-size:19px;font-weight:900;box-shadow:inset 0 -4px 0 #0005}.ball:active{transform:scale(.93)}.ball.used{opacity:.18}.ball.low{outline:3px solid #e8c967;outline-offset:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.btn{border:1px solid #2b3831;background:#202923;color:#f5f7f6;border-radius:12px;padding:12px 7px;font-weight:700}.btn.red{color:#ffaaaa}.btn.green{background:#55d98d;border-color:#55d98d;color:#06130b}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.stat{text-align:center;background:#0e1512;border-radius:11px;padding:8px}.stat strong{display:block;font-size:18px}.stat span{font-size:9px;color:#8f9b95}.history{max-height:160px;overflow:auto;font-size:11px}.hrow{display:flex;justify-content:space-between;padding:7px 2px;border-bottom:1px solid #26332c}.muted{color:#8f9b95;font-size:10px;line-height:1.5}
+.modal{position:fixed;inset:0;background:#000b;display:none;align-items:flex-end;padding:10px;z-index:10}.modal.on{display:flex}.sheet{width:100%;max-width:520px;margin:auto;background:#151e19;border:1px solid #2a382f;border-radius:20px;padding:16px}.sheet h2{margin:0 0 12px}.field{margin:9px 0}.field label{display:block;color:#929e98;font-size:11px;margin-bottom:5px}.field input{width:100%;background:#0c120f;color:white;border:1px solid #29372f;border-radius:10px;padding:11px}.sheet .btn{width:100%;margin-top:7px}
+.win{position:fixed;inset:0;background:#000d;display:none;align-items:center;justify-content:center;padding:20px;z-index:20}.win.on{display:flex}.winbox{width:100%;max-width:400px;text-align:center;background:#151e19;border:2px solid #55d98d;border-radius:22px;padding:25px}.winbox h2{font-size:30px;margin:0 0 8px}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div><h1>🎱 Rotation Score</h1></div><button class="gear" onclick="settings()">⚙︎</button></header>
+
+<div class="card">
+<div class="players">
+<div id="p0" class="p active"><div class="tag" id="t0">YOUR TURN</div><div class="name" id="n0">PLAYER 1</div><div class="score" id="s0">0</div><div class="remain" id="r0">残り 61</div><div class="bar"><i id="bar0"></i></div></div>
+<div id="p1" class="p"><div class="tag" id="t1"></div><div class="name" id="n1">PLAYER 2</div><div class="score" id="s1">0</div><div class="remain" id="r1">残り 61</div><div class="bar"><i id="bar1"></i></div></div>
+</div>
+</div>
+
+<div class="card">
+<div class="turn"><b id="turn">PLAYER 1 のターン</b><span class="pill" id="info">ラック 1</span></div>
+<div class="balls" id="balls"></div>
+<div class="grid2"><button class="btn red" onclick="changeTurn('ファウル')">⚠ ファウル</button><button class="btn" onclick="changeTurn('ミス')">ミス</button></div>
+<div class="grid2"><button class="btn" onclick="undo()">↩︎ 取り消し</button><button class="btn green" onclick="rackEnd()">ラック終了</button></div>
+</div>
+
+<div class="card">
+<div class="stats">
+<div class="stat"><strong id="run">0</strong><span>現在ラン</span></div>
+<div class="stat"><strong id="high">0</strong><span>ハイラン</span></div>
+<div class="stat"><strong id="rack">1</strong><span>ラック</span></div>
+</div>
+</div>
+
+<div class="card">
+<div class="turn"><b>履歴</b><span class="muted" id="hc"></span></div>
+<div class="history" id="history"><span class="muted">まだありません</span></div>
+</div>
+<div class="card"><div class="muted">入れたボール番号をタップしてください。入れ続けている間は同じプレイヤーのターンが続きます。ミス・ファウルを押すと相手へターンが移ります。</div></div>
+</div>
+
+<div class="modal" id="modal"><div class="sheet">
+<h2>設定</h2>
+<div class="field"><label>PLAYER 1</label><input id="i0"></div>
+<div class="field"><label>PLAYER 2</label><input id="i1"></div>
+<div class="field"><label>目標点</label><input id="it" type="number" min="1" max="120"></div>
+<button class="btn green" onclick="apply()">保存</button><button class="btn" onclick="closeSettings()">閉じる</button>
+</div></div>
+
+<div class="win" id="win"><div class="winbox"><h2 id="winner"></h2><p id="wintext"></p><button class="btn green" onclick="newGame()">新しいゲーム</button></div></div>
+
+<script>
+const KEY="rotation_score_working";
+let G={names:["PLAYER 1","PLAYER 2"],scores:[0,0],target:61,turn:0,rack:1,used:[],history:[],run:0,high:0};
+function $(x){return document.getElementById(x)}
+function save(){localStorage.setItem(KEY,JSON.stringify(G))}
+function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x)G=Object.assign(G,x)}catch(e){}}
+function draw(){
+ for(let i=0;i<2;i++){
+  $("n"+i).textContent=G.names[i];$("s"+i).textContent=G.scores[i];
+  $("r"+i).textContent="残り "+Math.max(0,G.target-G.scores[i]);
+  $("bar"+i).style.width=Math.min(100,G.scores[i]/G.target*100)+"%";
+  $("p"+i).classList.toggle("active",G.turn===i);$("t"+i).textContent=G.turn===i?"YOUR TURN":"";
+ }
+ $("turn").textContent=G.names[G.turn]+" のターン";$("info").textContent="ラック "+G.rack;
+ $("run").textContent=G.run;$("high").textContent=G.high;$("rack").textContent=G.rack;
+ let low=1;while(G.used.includes(low)&&low<=15)low++;
+ $("balls").innerHTML="";
+ for(let n=1;n<=15;n++){
+  let b=document.createElement("button");b.className="ball"+(G.used.includes(n)?" used":"")+(n===low?" low":"");
+  b.textContent=n;b.disabled=G.used.includes(n);b.onclick=()=>pocket(n);$("balls").appendChild(b);
+ }
+ $("hc").textContent=G.history.length+"件";
+ $("history").innerHTML=G.history.length?G.history.slice().reverse().map(x=>`<div class="hrow"><span>${x.name}　${x.action}</span><b>${x.points?"+"+x.points:""}</b></div>`).join(""):'<span class="muted">まだありません</span>';
+ save();
+}
+function pocket(n){
+ let i=G.turn;G.scores[i]+=n;G.run+=n;G.high=Math.max(G.high,G.run);G.used.push(n);
+ G.history.push({name:G.names[i],action:n+"番 IN",points:n});
+ draw(); if(G.scores[i]>=G.target) winner(i);
+}
+function changeTurn(action){
+ G.history.push({name:G.names[G.turn],action,points:0});
+ G.turn=1-G.turn;G.run=0;draw();
+}
+function undo(){
+ if(!G.history.length)return;
+ let x=G.history.pop();
+ if(x.points){G.scores[G.names.indexOf(x.name)]-=x.points;G.used.pop();G.run=Math.max(0,G.run-x.points)}
+ else {G.turn=G.names.indexOf(x.name);G.run=0}
+ $("win").classList.remove("on");draw();
+}
+function rackEnd(){
+ if(!G.used.length)return;
+ G.history.push({name:"SYSTEM",action:"ラック "+G.rack+" 終了",points:0});
+ G.used=[];G.rack++;G.turn=1-G.turn;G.run=0;draw();
+}
+function winner(i){$("winner").textContent="🎉 "+G.names[i]+" WIN";$("wintext").textContent=G.scores[i]+"点。目標 "+G.target+"点に到達しました。";$("win").classList.add("on")}
+function newGame(){G.scores=[0,0];G.turn=0;G.rack=1;G.used=[];G.history=[];G.run=0;G.high=0;$("win").classList.remove("on");draw()}
+function settings(){$("i0").value=G.names[0];$("i1").value=G.names[1];$("it").value=G.target;$("modal").classList.add("on")}
+function closeSettings(){$("modal").classList.remove("on")}
+function apply(){G.names=[$("i0").value.trim()||"PLAYER 1",$("i1").value.trim()||"PLAYER 2"];G.target=Math.max(1,Math.min(120,+$("it").value||61));closeSettings();draw()}
+load();draw();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
