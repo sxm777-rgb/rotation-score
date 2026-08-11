@@ -1,0 +1,1 @@
+(()=>{const K="rotation_score_working";try{const x=JSON.parse(localStorage.getItem(K)||"null");if(x&&x.target===61){x.target=120;localStorage.setItem(K,JSON.stringify(x))}}catch(e){}})();
