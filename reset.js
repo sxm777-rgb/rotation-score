@@ -1,0 +1,5 @@
+(()=>{if(window.__rotationResetLoaded)return;window.__rotationResetLoaded=true;
+const st=document.createElement('style');st.textContent='#resetGameBtn{width:100%;margin-top:8px;border:1px solid #6b3535;background:#2a1919;color:#ffb1b1;border-radius:12px;padding:12px 7px;font-weight:800}';document.head.appendChild(st);
+const btn=document.createElement('button');btn.id='resetGameBtn';btn.textContent='↻ ゲームをリセット';
+const cards=document.querySelectorAll('.card');const target=cards[1]||document.querySelector('.card');if(target)target.appendChild(btn);
+btn.onclick=()=>{if(!confirm('現在のゲームをリセットしますか？\nスコア・ターン・ラック・現在の履歴を初期化します。'))return;if(typeof window.newGame==='function'){window.newGame();return}try{const G=JSON.parse(localStorage.getItem('rotation_score_working')||'{}');G.scores=[0,0];G.turn=0;G.rack=1;G.used=[];G.history=[];G.run=0;G.high=0;localStorage.setItem('rotation_score_working',JSON.stringify(G));location.reload()}catch(e){location.reload()}}})();
