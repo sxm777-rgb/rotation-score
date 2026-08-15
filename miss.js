@@ -1,0 +1,2 @@
+(()=>{if(window.__rotationMissButtonLoaded)return;window.__rotationMissButtonLoaded=true;
+const st=document.createElement('style');st.textContent='button[onclick*="change(\'ミス\')"]{font-size:17px!important;padding:16px 7px!important;min-height:58px!important;font-weight:900!important}';document.head.appendChild(st);})();
